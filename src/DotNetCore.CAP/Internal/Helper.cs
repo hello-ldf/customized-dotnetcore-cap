@@ -53,7 +53,7 @@ namespace DotNetCore.CAP.Internal
         {
             if (wildcard.IndexOf('*') >= 0)
             {
-                return ("^" + wildcard + "$").Replace("*", "[0-9a-zA-Z]+").Replace(".", "\\.");
+                return ("^" + wildcard + "$").Replace("*", "[0-9a-zA-Z\\-]+").Replace(".", "\\.");
             }
 
             if (wildcard.IndexOf('#') >= 0)
