@@ -75,11 +75,14 @@ namespace DotNetCore.CAP.Internal
             foreach (var matchGroup in groupingMatches)
             {
                 ICollection<string> topics;
+                ICollection<string> autoDynamicTopics;
                 try
                 {
                     using (var client = _consumerClientFactory.Create(matchGroup.Key))
                     {
                         topics = client.FetchTopics(matchGroup.Value.Select(x => x.TopicName));
+                        autoDynamicTopics = client.FetchTopics(
+                            matchGroup.Value.Where(x => x.Attribute.AutoDynamicBind).Select(x => x.TopicName));
                     }
                 }
                 catch (BrokerConnectionException e)
@@ -103,6 +106,8 @@ namespace DotNetCore.CAP.Internal
                                 RegisterMessageProcessor(client);
 
                                 client.Subscribe(topicIds);
+
+                                client.SubscribeDynamic(autoDynamicTopics);
 
                                 client.Listening(_pollingDelay, _cts.Token);
                             }
@@ -131,7 +136,7 @@ namespace DotNetCore.CAP.Internal
             if (!IsHealthy() || force)
             {
                 Pulse();
-                
+
                 _cts = new CancellationTokenSource();
                 _isHealthy = true;
 

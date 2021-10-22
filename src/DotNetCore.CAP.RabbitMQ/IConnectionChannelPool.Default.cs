@@ -40,8 +40,11 @@ namespace DotNetCore.CAP.RabbitMQ
 
             HostAddress = $"{options.HostName}:{options.Port}";
             Exchange = "v1" == capOptions.Version ? options.ExchangeName : $"{options.ExchangeName}.{capOptions.Version}";
+            CentralExchange = "v1" == capOptions.Version ? options.CentralExchange : $"{options.CentralExchange}.{capOptions.Version}";
+            DynamicExchange = "v1" == capOptions.Version ? options.DynamicExchange : $"{options.DynamicExchange}.{capOptions.Version}";
+            StaticExchange = "v1" == capOptions.Version ? options.StaticExchange : $"{options.StaticExchange}.{capOptions.Version}";
 
-            _logger.LogDebug($"RabbitMQ configuration:'HostName:{options.HostName}, Port:{options.Port}, UserName:{options.UserName}, Password:{options.Password}, ExchangeName:{options.ExchangeName}'");
+            _logger.LogDebug($"RabbitMQ configuration:'HostName:{options.HostName}, Port:{options.Port}, UserName:{options.UserName}, Password:{options.Password}, ExchangeName:{options.ExchangeName}, CentralExchange:{options.CentralExchange}, DynamicExchange:{options.DynamicExchange}, StaticExchange:{options.StaticExchange}'");
         }
 
         IModel IConnectionChannelPool.Rent()
@@ -64,6 +67,9 @@ namespace DotNetCore.CAP.RabbitMQ
         public string HostAddress { get; }
 
         public string Exchange { get; }
+        public string CentralExchange { get; }
+        public string DynamicExchange { get; }
+        public string StaticExchange { get; }
 
         public IConnection GetConnection()
         {

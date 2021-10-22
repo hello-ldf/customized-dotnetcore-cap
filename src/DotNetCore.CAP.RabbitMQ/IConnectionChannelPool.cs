@@ -10,6 +10,9 @@ namespace DotNetCore.CAP.RabbitMQ
         string HostAddress { get; }
 
         string Exchange { get; }
+        string CentralExchange { get; }
+        string DynamicExchange { get; }
+        string StaticExchange { get; }
 
         IConnection GetConnection();
 

@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using DotNetCore.CAP.Messages;
 using DotNetCore.CAP.Transport;
+using JetBrains.Annotations;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -19,7 +20,9 @@ namespace DotNetCore.CAP.RabbitMQ
         private readonly SemaphoreSlim _connectionLock = new SemaphoreSlim(initialCount: 1, maxCount: 1);
 
         private readonly IConnectionChannelPool _connectionChannelPool;
-        private readonly string _exchangeName;
+        private readonly string _centralExchange;
+        private readonly string _dynamicExchange;
+        private readonly string _staticExchangeName;
         private readonly string _queueName;
         private readonly RabbitMQOptions _rabbitMQOptions;
         private IModel _channel;
@@ -33,7 +36,9 @@ namespace DotNetCore.CAP.RabbitMQ
             _queueName = queueName;
             _connectionChannelPool = connectionChannelPool;
             _rabbitMQOptions = options.Value;
-            _exchangeName = connectionChannelPool.Exchange;
+            _centralExchange = connectionChannelPool.CentralExchange;
+            _dynamicExchange = connectionChannelPool.DynamicExchange;
+            _staticExchangeName = connectionChannelPool.StaticExchange;
         }
 
         public event EventHandler<TransportMessage> OnMessageReceived;
@@ -53,7 +58,38 @@ namespace DotNetCore.CAP.RabbitMQ
 
             foreach (var topic in topics)
             {
-                _channel.QueueBind(_queueName, _exchangeName, topic);
+                _channel.ExchangeBind(_dynamicExchange, _centralExchange, topic);
+                _channel.QueueBind(_queueName, _staticExchangeName, topic);
+            }
+        }
+
+        public void SubscribeDynamic([NotNull] IEnumerable<string> topics)
+        {
+            if (topics == null)
+            {
+                throw new ArgumentNullException(nameof(topics));
+            }
+
+            Connect();
+
+            foreach (var topic in topics)
+            {
+                _channel.ExchangeBind(_staticExchangeName, _dynamicExchange, topic);
+            }
+        }
+
+        public void UnsubscribeDynamic([NotNull] IEnumerable<string> topics)
+        {
+            if (topics == null)
+            {
+                throw new ArgumentNullException(nameof(topics));
+            }
+
+            Connect();
+
+            foreach (var topic in topics)
+            {
+                _channel.ExchangeUnbind(_staticExchangeName, _dynamicExchange, topic);
             }
         }
 
@@ -120,7 +156,9 @@ namespace DotNetCore.CAP.RabbitMQ
 
                     _channel = _connection.CreateModel();
 
-                    _channel.ExchangeDeclare(_exchangeName, RabbitMQOptions.ExchangeType, true);
+                    _channel.ExchangeDeclare(_centralExchange, RabbitMQOptions.ExchangeType, true);
+                    _channel.ExchangeDeclare(_dynamicExchange, RabbitMQOptions.ExchangeType, true);
+                    _channel.ExchangeDeclare(_staticExchangeName, RabbitMQOptions.ExchangeType, true);
 
                     var arguments = new Dictionary<string, object>
                     {

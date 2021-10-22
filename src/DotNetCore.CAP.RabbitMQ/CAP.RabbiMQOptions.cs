@@ -64,6 +64,9 @@ namespace DotNetCore.CAP
         /// Topic exchange name when declare a topic exchange.
         /// </summary>
         public string ExchangeName { get; set; } = DefaultExchangeName;
+        public string CentralExchange { get; set; } = DefaultExchangeName;
+        public string DynamicExchange { get; set; } = DefaultExchangeName;
+        public string StaticExchange { get; set; } = DefaultExchangeName;
 
         /// <summary>
         /// The port to connect on.

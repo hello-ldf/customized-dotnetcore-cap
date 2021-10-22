@@ -18,6 +18,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		LICENSE.txt = LICENSE.txt
 		README.md = README.md
 		README.zh-cn.md = README.zh-cn.md
+		分析.txt = 分析.txt
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetCore.CAP", "src\DotNetCore.CAP\DotNetCore.CAP.csproj", "{E8AF8611-0EA4-4B19-BC48-87C57A87DC66}"

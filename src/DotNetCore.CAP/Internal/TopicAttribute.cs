@@ -12,10 +12,11 @@ namespace DotNetCore.CAP.Internal
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = true)]
     public abstract class TopicAttribute : Attribute
     {
-        protected TopicAttribute(string name, bool isPartial = false)
+        protected TopicAttribute(string name, bool isPartial = false, bool autoDynamicBind = false)
         {
             Name = name;
             IsPartial = isPartial;
+            AutoDynamicBind = autoDynamicBind;
         }
 
         /// <summary>
@@ -36,5 +37,10 @@ namespace DotNetCore.CAP.Internal
         /// rabbit MQ --> queue.name
         /// </summary>
         public string Group { get; set; }
+
+        /// <summary>
+        /// 是否自动指定动态路由绑定，不指定则需手动绑定
+        /// </summary>
+        public bool AutoDynamicBind { get; }
     }
 }

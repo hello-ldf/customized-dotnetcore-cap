@@ -34,6 +34,10 @@ namespace DotNetCore.CAP.Transport
         /// <param name="topics"></param>
         void Subscribe([NotNull] IEnumerable<string> topics);
 
+        void SubscribeDynamic([NotNull] IEnumerable<string> topics);
+
+        void UnsubscribeDynamic([NotNull] IEnumerable<string> topics);
+
         /// <summary>
         /// Start listening
         /// </summary>

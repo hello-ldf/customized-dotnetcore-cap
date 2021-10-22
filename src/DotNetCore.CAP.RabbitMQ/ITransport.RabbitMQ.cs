@@ -2,6 +2,8 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 using DotNetCore.CAP.Internal;
@@ -16,7 +18,9 @@ namespace DotNetCore.CAP.RabbitMQ
     {
         private readonly IConnectionChannelPool _connectionChannelPool;
         private readonly ILogger _logger;
-        private readonly string _exchange;
+        private readonly string _centralExchange;
+        private readonly string _dynamicExchange;
+        private readonly string _staticExchangeName;
 
         public RabbitMQTransport(
             ILogger<RabbitMQTransport> logger,
@@ -24,7 +28,9 @@ namespace DotNetCore.CAP.RabbitMQ
         {
             _logger = logger;
             _connectionChannelPool = connectionChannelPool;
-            _exchange = _connectionChannelPool.Exchange;
+            _centralExchange = _connectionChannelPool.CentralExchange;
+            _dynamicExchange = _connectionChannelPool.DynamicExchange;
+            _staticExchangeName = _connectionChannelPool.StaticExchange;
         }
 
         public BrokerAddress BrokerAddress => new BrokerAddress("RabbitMQ", _connectionChannelPool.HostAddress);
@@ -42,9 +48,9 @@ namespace DotNetCore.CAP.RabbitMQ
                 props.DeliveryMode = 2;
                 props.Headers = message.Headers.ToDictionary(x => x.Key, x => (object)x.Value);
 
-                channel.ExchangeDeclare(_exchange, RabbitMQOptions.ExchangeType, true);
+                channel.ExchangeDeclare(_centralExchange, RabbitMQOptions.ExchangeType, true);
 
-                channel.BasicPublish(_exchange, message.GetName(), props, message.Body);
+                channel.BasicPublish(_centralExchange, message.GetName(), props, message.Body);
 
                 channel.WaitForConfirmsOrDie(TimeSpan.FromSeconds(5));
 
@@ -62,6 +68,59 @@ namespace DotNetCore.CAP.RabbitMQ
                 };
 
                 return Task.FromResult(OperateResult.Failed(wrapperEx, errors));
+            }
+            finally
+            {
+                if (channel != null)
+                {
+                    _connectionChannelPool.Return(channel);
+                }
+            }
+        }
+
+        public void SubscribeDynamic([NotNull] IEnumerable<string> topics)
+        {
+            if (topics == null)
+            {
+                throw new ArgumentNullException(nameof(topics));
+            }
+
+            IModel channel = null;
+            try
+            {
+                channel = _connectionChannelPool.Rent();
+
+                foreach (var topic in topics)
+                {
+                    channel.ExchangeBind(_staticExchangeName, _dynamicExchange, topic);
+                }
+            }
+            finally
+            {
+                if (channel != null)
+                {
+                    _connectionChannelPool.Return(channel);
+                }
+            }
+            
+        }
+
+        public void UnsubscribeDynamic([NotNull] IEnumerable<string> topics)
+        {
+            if (topics == null)
+            {
+                throw new ArgumentNullException(nameof(topics));
+            }
+
+            IModel channel = null;
+            try
+            {
+                channel = _connectionChannelPool.Rent();
+
+                foreach (var topic in topics)
+                {
+                    channel.ExchangeUnbind(_staticExchangeName, _dynamicExchange, topic);
+                }
             }
             finally
             {

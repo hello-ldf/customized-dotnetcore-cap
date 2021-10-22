@@ -26,13 +26,13 @@ namespace Sample.RabbitMQ.MySql
     }
     public class AppDbContext : DbContext
     {
-        public const string ConnectionString = "";
+        public const string ConnectionString = "server=127.0.0.1;database=cap_sample_rabbitmq_mysql;user id=root;password=123456;CharSet=utf8;pooling=true;sslmode=none";
 
         public DbSet<Person> Persons { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseMySql(ConnectionString, ServerVersion.FromString("mysql"));
+            optionsBuilder.UseMySql(ConnectionString, ServerVersion.FromString("5.7.34-mysql"));
         }
     }
 }

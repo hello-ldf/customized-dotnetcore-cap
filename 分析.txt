@@ -1,0 +1,27 @@
+【CAP推送，入库，发布入队】
+CAP.publish=>
+=> CAP.IDataStorage.StoreMessage 
+=> CAP.IDispatcher.EnqueueToPublish 
+=> _publishedChannel.Writer.TryWrite
+
+【后台任务出队，发布消息】
+Task() 
+=> _publishedChannel.Reader.WaitToReadAsync 
+=> _publishedChannel.Reader.TryRead 
+=> rabbitmq.publish
+
+【实际消息监听，入库，消费入队】
+Listening 
+=> rabbitmq.Received 
+=> 转TransportMessage 
+=> EventHandler.Invoke => OnMessageReceived
+=> CAP.IDataStorage.StoreReceivedMessage 
+=> CAP.IDispatcher.EnqueueToExecute 
+=> _receivedChannel.Writer.TryWrite
+
+【后台任务出队，消费并执行】
+Task() 
+=>  _receivedChannel.Reader.WaitToReadAsync 
+=> _receivedChannel.Reader.TryRead 
+=> rabbitmq.publish
+=> CAP.ISubscribeDispatcher.DispatchAsync

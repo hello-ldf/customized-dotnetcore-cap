@@ -15,6 +15,12 @@ namespace Sample.RabbitMQ.MySql
             {
                 x.UseEntityFramework<AppDbContext>();
                 x.UseRabbitMQ("localhost");
+                x.UseRabbitMQ(o =>
+                {
+                    o.CentralExchange = "demo.central.exchange";
+                    o.DynamicExchange = "demo.dynamic.exchange";
+                    o.StaticExchange = "demo.static.exchange";
+                });
                 x.UseDashboard();
                 x.FailedRetryCount = 5;
                 x.FailedThresholdCallback = failed =>

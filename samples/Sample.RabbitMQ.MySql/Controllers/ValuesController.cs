@@ -47,7 +47,7 @@ namespace Sample.RabbitMQ.MySql.Controllers
         }
 
         [Route("~/ef/transaction")]
-        public IActionResult EntityFrameworkWithTransaction([FromServices]AppDbContext dbContext)
+        public IActionResult EntityFrameworkWithTransaction([FromServices] AppDbContext dbContext)
         {
             using (var trans = dbContext.Database.BeginTransaction(_capBus, autoCommit: false))
             {
@@ -66,7 +66,7 @@ namespace Sample.RabbitMQ.MySql.Controllers
         }
 
         [NonAction]
-        [CapSubscribe("sample.rabbitmq.mysql")]
+        [CapSubscribe("sample.rabbitmq.mysql", autoDynamicBind: true)]
         public void Subscriber(DateTime p)
         {
             Console.WriteLine($@"{DateTime.Now} Subscriber invoked, Info: {p}");
@@ -74,7 +74,7 @@ namespace Sample.RabbitMQ.MySql.Controllers
 
         [NonAction]
         [CapSubscribe("sample.rabbitmq.mysql", Group = "group.test2")]
-        public void Subscriber2(DateTime p, [FromCap]CapHeader header)
+        public void Subscriber2(DateTime p, [FromCap] CapHeader header)
         {
             Console.WriteLine($@"{DateTime.Now} Subscriber invoked, Info: {p}");
         }

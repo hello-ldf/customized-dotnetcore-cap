@@ -11,8 +11,8 @@ namespace DotNetCore.CAP
 {
     public class CapSubscribeAttribute : TopicAttribute
     {
-        public CapSubscribeAttribute(string name, bool isPartial = false)
-            : base(name, isPartial)
+        public CapSubscribeAttribute(string name, bool isPartial = false, bool autoDynamicBind = false)
+            : base(name, isPartial, autoDynamicBind)
         {
 
         }
@@ -26,7 +26,7 @@ namespace DotNetCore.CAP
     [AttributeUsage(AttributeTargets.Parameter)]
     public class FromCapAttribute : Attribute
     {
-       
+
     }
 
     public class CapHeader : ReadOnlyDictionary<string, string>
