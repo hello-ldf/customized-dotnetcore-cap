@@ -4,7 +4,7 @@
 		<TargetFramework>net5.0</TargetFramework>
 		<LangVersion>default</LangVersion>
 		<PackageId>XD.DotNetCore.CAP.Dashboard</PackageId>
-		<Version>5.2.0-alpha</Version>
+		<Version>5.1.4.1-alpha</Version>
 		<Authors>ncc;savorboard;lidaifu</Authors>
 		<Description>个人修订版。https://github.com/hello-ldf/customized-dotnetcore-cap.git
 Distributed transaction solution in micro-service base on eventually consistency, also an eventbus with Outbox pattern.</Description>
