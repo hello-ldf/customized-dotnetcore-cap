@@ -25,3 +25,10 @@ Task()
 => _receivedChannel.Reader.TryRead 
 => rabbitmq.publish
 => CAP.ISubscribeDispatcher.DispatchAsync
+
+【定制化】
+让订阅topic时的*，在[a-z A-Z 0-9]的基础上增加横杠的支持
+
+MQOptions 增加 CentralExchange，DynamicExchange，StaticExchange
+TopicAttribute 增加属性 AutoDynamicBind，默认不会自动绑定，启动后会自动绑定到中层交换机。
+ITransport 增加方法 动态订阅和动态取消订阅。
