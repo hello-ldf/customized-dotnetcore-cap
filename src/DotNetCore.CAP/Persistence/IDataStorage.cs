@@ -23,9 +23,9 @@ namespace DotNetCore.CAP.Persistence
         Task<int> DeleteExpiresAsync(string table, DateTime timeout, int batchCount = 1000,
             CancellationToken token = default);
 
-        Task<IEnumerable<MediumMessage>> GetPublishedMessagesOfNeedRetry();
+        Task<IEnumerable<MediumMessage>> GetPublishedMessagesOfNeedRetry(long skip, long take);
 
-        Task<IEnumerable<MediumMessage>> GetReceivedMessagesOfNeedRetry();
+        Task<IEnumerable<MediumMessage>> GetReceivedMessagesOfNeedRetry(long skip, long take);
 
         //dashboard api
         IMonitoringApi GetMonitoringApi();

@@ -144,11 +144,11 @@ namespace DotNetCore.CAP.MySql
                 new MySqlParameter("@timeout", timeout), new MySqlParameter("@batchCount", batchCount));
         }
 
-        public async Task<IEnumerable<MediumMessage>> GetPublishedMessagesOfNeedRetry() =>
-            await GetMessagesOfNeedRetryAsync(_pubName);
+        public async Task<IEnumerable<MediumMessage>> GetPublishedMessagesOfNeedRetry(long skip, long take) =>
+            await GetMessagesOfNeedRetryAsync(_pubName, skip, take);
 
-        public async Task<IEnumerable<MediumMessage>> GetReceivedMessagesOfNeedRetry() =>
-            await GetMessagesOfNeedRetryAsync(_recName);
+        public async Task<IEnumerable<MediumMessage>> GetReceivedMessagesOfNeedRetry(long skip, long take) =>
+            await GetMessagesOfNeedRetryAsync(_recName, skip, take);
 
         public IMonitoringApi GetMonitoringApi()
         {
@@ -182,12 +182,13 @@ namespace DotNetCore.CAP.MySql
             connection.ExecuteNonQuery(sql, sqlParams: sqlParams);
         }
 
-        private async Task<IEnumerable<MediumMessage>> GetMessagesOfNeedRetryAsync(string tableName)
+        private async Task<IEnumerable<MediumMessage>> GetMessagesOfNeedRetryAsync(string tableName, long skip, long take)
         {
+            var oneMinAgo = DateTime.Now.AddMinutes(-1).ToString("");
             var fourMinAgo = DateTime.Now.AddMinutes(-4).ToString("O");
             var sql =
                 $"SELECT `Id`,`Content`,`Retries`,`Added` FROM `{tableName}` WHERE `Retries`<{_capOptions.Value.FailedRetryCount} " +
-                $"AND `Version`='{_capOptions.Value.Version}' AND `Added`<'{fourMinAgo}' AND (`StatusName` = '{StatusName.Failed}' OR `StatusName` = '{StatusName.Scheduled}') LIMIT 200;";
+                $"AND `Version`='{_capOptions.Value.Version}' AND ((`Added`<'{oneMinAgo}' AND `StatusName` = '{StatusName.Failed}') OR (`Added`<'{fourMinAgo}' AND `StatusName` = '{StatusName.Scheduled}')) LIMIT {skip},{take};";
 
             await using var connection = new MySqlConnection(_options.Value.ConnectionString);
             var result = connection.ExecuteReader(sql, reader =>

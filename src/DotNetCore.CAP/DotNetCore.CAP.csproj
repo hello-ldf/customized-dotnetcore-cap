@@ -13,7 +13,7 @@
 Distributed transaction solution in micro-service base on eventually consistency, also an eventbus with Outbox pattern.</Description>
     <PackageProjectUrl>https://github.com/dotnetcore/CAP</PackageProjectUrl>
     <Authors>ncc;savorboard;lidaifu</Authors>
-    <Version>5.1.4.1-alpha</Version>
+    <Version>5.1.4.3-alpha</Version>
   </PropertyGroup>
   
   <ItemGroup>

@@ -24,7 +24,12 @@ Task()
 =>  _receivedChannel.Reader.WaitToReadAsync 
 => _receivedChannel.Reader.TryRead 
 => rabbitmq.publish
-=> CAP.ISubscribeDispatcher.DispatchAsync
+=> CAP.ISubscribeDispatcher.DispatchAsync（执行失败时会不间断进行重试，直至阈值【在SubscribeDispatcher.UpdateMessageForRetry指定了3次】）
+
+【重试机制】
+重试不是每秒钟消费超过重试时间的消息，而是每个重试周期后消费一次需要重试的消息！！
+而且，每次都是取前200条，那如果异常重试次数足够大的情况下，系统将永远在重试前200条，后面的异常将不会重试。
+MySqlDataStorage.GetMessagesOfNeedRetryAsync（默认取添加4分钟后才进入重试）
 
 【定制化】
 让订阅topic时的*，在[a-z A-Z 0-9]的基础上增加横杠的支持
@@ -32,3 +37,7 @@ Task()
 MQOptions 增加 CentralExchange，DynamicExchange，StaticExchange
 TopicAttribute 增加属性 AutoDynamicBind，默认不会自动绑定，启动后会自动绑定到中层交换机。
 ITransport 增加方法 动态订阅和动态取消订阅。
+
+不间断重试3次是没有意义的【应优化为指数增长式时间间隔】，把值调到1，执行原来应有的1次即可。
+调整重试机制，失败重试要在1分钟前加入的，计划中重试要在4分钟前加入的。
+调整重试机制，重试的消息不串行执行，改Task.WhenAll 并行执行

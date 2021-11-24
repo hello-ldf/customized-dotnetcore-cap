@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Dapper;
 using DotNetCore.CAP;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MySqlConnector;
 
 namespace Sample.RabbitMQ.MySql.Controllers
@@ -16,6 +17,19 @@ namespace Sample.RabbitMQ.MySql.Controllers
         public ValuesController(ICapPublisher capPublisher)
         {
             _capBus = capPublisher;
+        }
+
+        [Route("~/mytest")]
+        public async Task<IActionResult> Mytest([FromServices] AppDbContext dbContext)
+        {
+            var sql = "select count(*) from `cap.received`";
+            var conn = dbContext.Database.GetDbConnection();
+            conn.Open();
+            var cmd = dbContext.Database.GetDbConnection().CreateCommand();
+            cmd.CommandText = sql;
+            var rs = await cmd.ExecuteReaderAsync();
+                
+            return Ok(rs);
         }
 
         [Route("~/without/transaction")]
@@ -70,13 +84,14 @@ namespace Sample.RabbitMQ.MySql.Controllers
         public void Subscriber(DateTime p)
         {
             Console.WriteLine($@"{DateTime.Now} Subscriber invoked, Info: {p}");
+            throw new Exception("作死");
         }
 
-        [NonAction]
-        [CapSubscribe("sample.rabbitmq.mysql", Group = "group.test2")]
-        public void Subscriber2(DateTime p, [FromCap] CapHeader header)
-        {
-            Console.WriteLine($@"{DateTime.Now} Subscriber invoked, Info: {p}");
-        }
+        //[NonAction]
+        //[CapSubscribe("sample.rabbitmq.mysql", Group = "group.test2")]
+        //public void Subscriber2(DateTime p, [FromCap] CapHeader header)
+        //{
+        //    Console.WriteLine($@"{DateTime.Now} Subscriber invoked, Info: {p}");
+        //}
     }
 }

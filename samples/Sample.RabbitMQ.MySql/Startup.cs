@@ -22,7 +22,9 @@ namespace Sample.RabbitMQ.MySql
                     o.StaticExchange = "demo.static.exchange";
                 });
                 x.UseDashboard();
-                x.FailedRetryCount = 5;
+                x.ConsumerThreadCount = 10;
+                x.FailedRetryCount = 30;
+                x.FailedRetryInterval = 3;
                 x.FailedThresholdCallback = failed =>
                 {
                     var logger = failed.ServiceProvider.GetService<ILogger<Startup>>();

@@ -51,29 +51,57 @@ namespace DotNetCore.CAP.Processor
         {
             context.ThrowIfStopping();
 
-            var messages = await GetSafelyAsync(connection.GetPublishedMessagesOfNeedRetry);
+            IEnumerable<MediumMessage> messages;
+            long skip = 0, take = 200;
 
-            foreach (var message in messages)
+            //do
+            //{
+            messages = await GetSafelyAsync(async () => await connection.GetPublishedMessagesOfNeedRetry(skip, take));
+
+            int groupCount = 20, i = 0;
+            while (true)
             {
-                //the message.Origin.Value maybe JObject
-                await _messageSender.SendAsync(message);
+                var group = messages.Skip(i * groupCount).Take(groupCount);
+                var tasks = group.Select(async u => await _messageSender.SendAsync(u));
+                await Task.WhenAll(tasks);
+
+                if (group.Count() < groupCount)
+                    break;
 
                 await context.WaitAsync(_delay);
+                i++;
             }
+
+            //skip += take;
+            //} while (messages.Count() == take);
         }
 
         private async Task ProcessReceivedAsync(IDataStorage connection, ProcessingContext context)
         {
             context.ThrowIfStopping();
 
-            var messages = await GetSafelyAsync(connection.GetReceivedMessagesOfNeedRetry);
+            IEnumerable<MediumMessage> messages;
+            long skip = 0, take = 200;
 
-            foreach (var message in messages)
+            //do
+            //{
+            messages = await GetSafelyAsync(async () => await connection.GetReceivedMessagesOfNeedRetry(skip, take));
+
+            int groupCount = 20, i = 0;
+            while (true)
             {
-                await _subscribeDispatcher.DispatchAsync(message, context.CancellationToken);
+                var group = messages.Skip(i * groupCount).Take(groupCount);
+                var tasks = group.Select(async u => await _subscribeDispatcher.DispatchAsync(u, context.CancellationToken));
+                await Task.WhenAll(tasks);
+
+                if (group.Count() < groupCount)
+                    break;
 
                 await context.WaitAsync(_delay);
+                i++;
             }
+            //skip += take;
+            //} while (messages.Count() == take);
         }
 
         private async Task<IEnumerable<T>> GetSafelyAsync<T>(Func<Task<IEnumerable<T>>> getMessagesAsync)

@@ -138,7 +138,7 @@ namespace DotNetCore.CAP.Internal
         {
             var retries = ++message.Retries;
 
-            var retryCount = Math.Min(_options.FailedRetryCount, 3);
+            var retryCount = Math.Min(_options.FailedRetryCount, 1);
             if (retries >= retryCount)
             {
                 if (retries == _options.FailedRetryCount)
