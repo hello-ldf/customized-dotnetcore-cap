@@ -33,11 +33,11 @@ namespace DotNetCore.CAP.RabbitMQ
             _staticExchangeName = _connectionChannelPool.StaticExchange;
         }
 
-        public BrokerAddress BrokerAddress => new BrokerAddress("RabbitMQ", _connectionChannelPool.HostAddress);
+        public BrokerAddress BrokerAddress => new ("RabbitMQ", _connectionChannelPool.HostAddress);
 
         public Task<OperateResult> SendAsync(TransportMessage message)
         {
-            IModel channel = null;
+            IModel? channel = null;
             try
             {
                 channel = _connectionChannelPool.Rent();
@@ -46,7 +46,7 @@ namespace DotNetCore.CAP.RabbitMQ
 
                 var props = channel.CreateBasicProperties();
                 props.DeliveryMode = 2;
-                props.Headers = message.Headers.ToDictionary(x => x.Key, x => (object)x.Value);
+                props.Headers = message.Headers.ToDictionary(x => x.Key, x => (object?)x.Value);
 
                 channel.ExchangeDeclare(_centralExchange, RabbitMQOptions.ExchangeType, true);
 

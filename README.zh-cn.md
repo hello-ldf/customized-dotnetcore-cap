@@ -39,16 +39,19 @@ CAP 采用的是和当前数据库集成的本地消息表的方案来解决在�
 PM> Install-Package DotNetCore.CAP
 ```
 
-CAP 支持 Kafka、RabbitMQ、AzureServiceBus、AmazonSQS 等消息队列，你可以按需选择下面的包进行安装：
+CAP 支持主流的消息队列作为传输器，你可以按需选择下面的包进行安装：
 
 ```
 PM> Install-Package DotNetCore.CAP.Kafka
 PM> Install-Package DotNetCore.CAP.RabbitMQ
 PM> Install-Package DotNetCore.CAP.AzureServiceBus
 PM> Install-Package DotNetCore.CAP.AmazonSQS
+PM> Install-Package DotNetCore.CAP.NATS
+PM> Install-Package DotNetCore.CAP.RedisStreams
+PM> Install-Package DotNetCore.CAP.Pulsar
 ```
 
-CAP 提供了 Sql Server, MySql, PostgreSQL，MongoDB 的扩展作为数据库存储：
+CAP 提供了主流数据库作为存储，你可以按需选择下面的包进行安装：
 
 ```
 // 按需选择安装你正在使用的数据库
@@ -195,7 +198,6 @@ namespace xxx.Service
 ```c#
 public void ConfigureServices(IServiceCollection services)
 {
-    //注意: 注入的服务需要在 `services.AddCap()` 之前
     services.AddTransient<ISubscriberService,SubscriberService>();
 	
     services.AddCap(x=>{});

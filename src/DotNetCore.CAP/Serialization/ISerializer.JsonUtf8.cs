@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System;
-using System.Buffers;
 using System.Text.Json;
 using System.Threading.Tasks;
 using DotNetCore.CAP.Messages;
@@ -35,9 +34,9 @@ namespace DotNetCore.CAP.Serialization
             return Task.FromResult(new TransportMessage(message.Headers, jsonBytes));
         }
 
-        public Task<Message> DeserializeAsync(TransportMessage transportMessage, Type valueType)
+        public Task<Message> DeserializeAsync(TransportMessage transportMessage, Type? valueType)
         {
-            if (valueType == null || transportMessage.Body == null)
+            if (valueType == null || transportMessage.Body == null || transportMessage.Body.Length == 0)
             {
                 return Task.FromResult(new Message(transportMessage.Headers, null));
             }
@@ -52,23 +51,19 @@ namespace DotNetCore.CAP.Serialization
             return JsonSerializer.Serialize(message, _jsonSerializerOptions);
         }
 
-        public Message Deserialize(string json)
+        public Message? Deserialize(string json)
         {
             return JsonSerializer.Deserialize<Message>(json, _jsonSerializerOptions);
         }
 
-        public object Deserialize(object value, Type valueType)
+        public object? Deserialize(object value, Type valueType)
         {
-            if (value is JsonElement jToken)
+            if (value is JsonElement jsonElement)
             {
-                var bufferWriter = new ArrayBufferWriter<byte>();
-                using (var writer = new Utf8JsonWriter(bufferWriter))
-                {
-                    jToken.WriteTo(writer);
-                }
-                return JsonSerializer.Deserialize(bufferWriter.WrittenSpan, valueType, _jsonSerializerOptions);
+                return JsonSerializer.Deserialize(jsonElement, valueType, _jsonSerializerOptions);
             }
-            throw new NotSupportedException("Type is not of type JToken");
+
+            throw new NotSupportedException("Type is not of type JsonElement");
         }
 
         public bool IsJsonType(object jsonObject)

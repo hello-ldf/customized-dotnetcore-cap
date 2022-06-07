@@ -24,7 +24,7 @@ namespace DotNetCore.CAP.AzureServiceBus
         private readonly string _subscriptionName;
         private readonly AzureServiceBusOptions _asbOptions;
 
-        private SubscriptionClient _consumerClient;
+        private SubscriptionClient? _consumerClient;
 
         public AzureServiceBusConsumerClient(
             ILogger logger,
@@ -36,11 +36,11 @@ namespace DotNetCore.CAP.AzureServiceBus
             _asbOptions = options.Value ?? throw new ArgumentNullException(nameof(options));
         }
 
-        public event EventHandler<TransportMessage> OnMessageReceived;
+        public event EventHandler<TransportMessage>? OnMessageReceived;
 
-        public event EventHandler<LogMessageEventArgs> OnLog;
+        public event EventHandler<LogMessageEventArgs>? OnLog;
 
-        public BrokerAddress BrokerAddress => new BrokerAddress("AzureServiceBus", _asbOptions.ConnectionString);
+        public BrokerAddress BrokerAddress => new ("AzureServiceBus", _asbOptions.ConnectionString);
 
         public void Subscribe(IEnumerable<string> topics)
         {
@@ -51,7 +51,7 @@ namespace DotNetCore.CAP.AzureServiceBus
 
             ConnectAsync().GetAwaiter().GetResult();
 
-            var allRuleNames = _consumerClient.GetRulesAsync().GetAwaiter().GetResult().Select(x => x.Name);
+            var allRuleNames = _consumerClient!.GetRulesAsync().GetAwaiter().GetResult().Select(x => x.Name);
 
             foreach (var newRule in topics.Except(allRuleNames))
             {
@@ -80,7 +80,7 @@ namespace DotNetCore.CAP.AzureServiceBus
 
             if (_asbOptions.EnableSessions)
             {
-                _consumerClient.RegisterSessionHandler(OnConsumerReceivedWithSession,
+                _consumerClient!.RegisterSessionHandler(OnConsumerReceivedWithSession,
                     new SessionHandlerOptions(OnExceptionReceived)
                     {
                         AutoComplete = false,
@@ -89,7 +89,7 @@ namespace DotNetCore.CAP.AzureServiceBus
             }
             else
             {
-                _consumerClient.RegisterMessageHandler(OnConsumerReceived,
+                _consumerClient!.RegisterMessageHandler(OnConsumerReceived,
                     new MessageHandlerOptions(OnExceptionReceived)
                     {
                         AutoComplete = false,
@@ -111,15 +111,15 @@ namespace DotNetCore.CAP.AzureServiceBus
             var commitInput = (AzureServiceBusConsumerCommitInput) sender;
             if (_asbOptions.EnableSessions)
             {
-                commitInput.Session.CompleteAsync(commitInput.LockToken);
+                commitInput.Session?.CompleteAsync(commitInput.LockToken);
             }
             else
             {
-                _consumerClient.CompleteAsync(commitInput.LockToken);
+                _consumerClient!.CompleteAsync(commitInput.LockToken);
             }
         }
 
-        public void Reject(object sender)
+        public void Reject(object? sender)
         {
             // ignore
         }
@@ -185,10 +185,29 @@ namespace DotNetCore.CAP.AzureServiceBus
 
         private TransportMessage ConvertMessage(Message message)
         {
-            var header = message.UserProperties.ToDictionary(x => x.Key, y => y.Value?.ToString());
-            header.Add(Headers.Group, _subscriptionName);
+            var headers = message.UserProperties
+                .ToDictionary(x => x.Key, y => y.Value?.ToString());
+            
+            headers.Add(Headers.Group, _subscriptionName);
 
-            return new TransportMessage(header, message.Body);
+            var customHeaders = _asbOptions.CustomHeaders?.Invoke(message);
+            
+            if (customHeaders?.Any() == true)
+            {
+                foreach (var customHeader in customHeaders)
+                {
+                    var added = headers.TryAdd(customHeader.Key, customHeader.Value);
+
+                    if (!added)
+                    {
+                        _logger.LogWarning(
+                            "Not possible to add the custom header {Header}. A value with the same key already exists in the Message headers.", 
+                            customHeader.Key);
+                    }
+                }
+            }
+
+            return new TransportMessage(headers, message.Body);
         }
         
         private Task OnConsumerReceivedWithSession(IMessageSession session, Message message, CancellationToken token)

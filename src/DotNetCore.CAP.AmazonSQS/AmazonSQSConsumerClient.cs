@@ -27,8 +27,8 @@ namespace DotNetCore.CAP.AmazonSQS
         private readonly string _groupId;
         private readonly AmazonSQSOptions _amazonSQSOptions;
 
-        private IAmazonSimpleNotificationService _snsClient;
-        private IAmazonSQS _sqsClient;
+        private IAmazonSimpleNotificationService? _snsClient;
+        private IAmazonSQS? _sqsClient;
         private string _queueUrl = string.Empty;
 
         public AmazonSQSConsumerClient(string groupId, IOptions<AmazonSQSOptions> options)
@@ -37,9 +37,9 @@ namespace DotNetCore.CAP.AmazonSQS
             _amazonSQSOptions = options.Value;
         }
 
-        public event EventHandler<TransportMessage> OnMessageReceived;
+        public event EventHandler<TransportMessage>? OnMessageReceived;
 
-        public event EventHandler<LogMessageEventArgs> OnLog;
+        public event EventHandler<LogMessageEventArgs>? OnLog;
 
         public BrokerAddress BrokerAddress => new BrokerAddress("AmazonSQS", _queueUrl);
 
@@ -57,7 +57,7 @@ namespace DotNetCore.CAP.AmazonSQS
             {
                 var createTopicRequest = new CreateTopicRequest(topic.NormalizeForAws());
 
-                var createTopicResponse = _snsClient.CreateTopicAsync(createTopicRequest).GetAwaiter().GetResult();
+                var createTopicResponse = _snsClient!.CreateTopicAsync(createTopicRequest).GetAwaiter().GetResult();
 
                 topicArns.Add(createTopicResponse.TopicArn);
             }
@@ -92,13 +92,13 @@ namespace DotNetCore.CAP.AmazonSQS
 
             while (true)
             {
-                var response = _sqsClient.ReceiveMessageAsync(request, cancellationToken).GetAwaiter().GetResult();
+                var response = _sqsClient!.ReceiveMessageAsync(request, cancellationToken).GetAwaiter().GetResult();
 
                 if (response.Messages.Count == 1)
                 {
                     var messageObj = JsonSerializer.Deserialize<SQSReceivedMessage>(response.Messages[0].Body);
 
-                    var header = messageObj.MessageAttributes.ToDictionary(x => x.Key, x => x.Value.Value);
+                    var header = messageObj!.MessageAttributes.ToDictionary(x => x.Key, x => x.Value.Value);
                     var body = messageObj.Message;
 
                     var message = new TransportMessage(header, body != null ? Encoding.UTF8.GetBytes(body) : null);
@@ -119,7 +119,7 @@ namespace DotNetCore.CAP.AmazonSQS
         {
             try
             {
-                _sqsClient.DeleteMessageAsync(_queueUrl, (string)sender);
+                _ = _sqsClient!.DeleteMessageAsync(_queueUrl, (string)sender).GetAwaiter().GetResult();
             }
             catch (InvalidIdFormatException ex)
             {
@@ -127,12 +127,12 @@ namespace DotNetCore.CAP.AmazonSQS
             }
         }
 
-        public void Reject(object sender)
+        public void Reject(object? sender)
         {
             try
             {
                 // Visible again in 3 seconds
-                _sqsClient.ChangeMessageVisibilityAsync(_queueUrl, (string)sender, 3);
+                _ = _sqsClient!.ChangeMessageVisibilityAsync(_queueUrl, (string)sender!, 3).GetAwaiter().GetResult();
             }
             catch (MessageNotInflightException ex)
             {
@@ -159,9 +159,18 @@ namespace DotNetCore.CAP.AmazonSQS
 
                 try
                 {
-                    _snsClient = _amazonSQSOptions.Credentials != null
-                        ? new AmazonSimpleNotificationServiceClient(_amazonSQSOptions.Credentials, _amazonSQSOptions.Region)
-                        : new AmazonSimpleNotificationServiceClient(_amazonSQSOptions.Region);
+                    if (string.IsNullOrWhiteSpace(_amazonSQSOptions.SNSServiceUrl))
+                    {
+                        _snsClient = _amazonSQSOptions.Credentials != null
+                            ? new AmazonSimpleNotificationServiceClient(_amazonSQSOptions.Credentials, _amazonSQSOptions.Region)
+                            : new AmazonSimpleNotificationServiceClient(_amazonSQSOptions.Region);
+                    }
+                    else
+                    {
+                        _snsClient = _amazonSQSOptions.Credentials != null
+                            ? new AmazonSimpleNotificationServiceClient(_amazonSQSOptions.Credentials, new AmazonSimpleNotificationServiceConfig() { ServiceURL = _amazonSQSOptions.SNSServiceUrl })
+                            : new AmazonSimpleNotificationServiceClient(new AmazonSimpleNotificationServiceConfig() { ServiceURL = _amazonSQSOptions.SNSServiceUrl });
+                    }
                 }
                 finally
                 {
@@ -175,10 +184,18 @@ namespace DotNetCore.CAP.AmazonSQS
 
                 try
                 {
-
-                    _sqsClient = _amazonSQSOptions.Credentials != null
-                        ? new AmazonSQSClient(_amazonSQSOptions.Credentials, _amazonSQSOptions.Region)
-                        : new AmazonSQSClient(_amazonSQSOptions.Region);
+                    if (string.IsNullOrWhiteSpace(_amazonSQSOptions.SQSServiceUrl))
+                    {
+                        _sqsClient = _amazonSQSOptions.Credentials != null
+                            ? new AmazonSQSClient(_amazonSQSOptions.Credentials, _amazonSQSOptions.Region)
+                            : new AmazonSQSClient(_amazonSQSOptions.Region);
+                    }
+                    else
+                    {
+                        _sqsClient = _amazonSQSOptions.Credentials != null
+                            ? new AmazonSQSClient(_amazonSQSOptions.Credentials, new AmazonSQSConfig() { ServiceURL = _amazonSQSOptions.SQSServiceUrl })
+                            : new AmazonSQSClient(new AmazonSQSConfig() { ServiceURL = _amazonSQSOptions.SQSServiceUrl });
+                    }
 
                     // If provide the name of an existing queue along with the exact names and values
                     // of all the queue's attributes, <code>CreateQueue</code> returns the queue URL for
@@ -194,7 +211,7 @@ namespace DotNetCore.CAP.AmazonSQS
 
         #region private methods
 
-        private Task InvalidIdFormatLog(string exceptionMessage)
+        private void InvalidIdFormatLog(string exceptionMessage)
         {
             var logArgs = new LogMessageEventArgs
             {
@@ -203,11 +220,9 @@ namespace DotNetCore.CAP.AmazonSQS
             };
 
             OnLog?.Invoke(null, logArgs);
-
-            return Task.CompletedTask;
         }
 
-        private Task MessageNotInflightLog(string exceptionMessage)
+        private void MessageNotInflightLog(string exceptionMessage)
         {
             var logArgs = new LogMessageEventArgs
             {
@@ -216,15 +231,13 @@ namespace DotNetCore.CAP.AmazonSQS
             };
 
             OnLog?.Invoke(null, logArgs);
-
-            return Task.CompletedTask;
         }
 
         private async Task GenerateSqsAccessPolicyAsync(IEnumerable<string> topicArns)
         {
             Connect(initSNS: false, initSQS: true);
 
-            var queueAttributes = await _sqsClient.GetAttributesAsync(_queueUrl).ConfigureAwait(false);
+            var queueAttributes = await _sqsClient!.GetAttributesAsync(_queueUrl).ConfigureAwait(false);
 
             var sqsQueueArn = queueAttributes["QueueArn"];
 
@@ -250,12 +263,12 @@ namespace DotNetCore.CAP.AmazonSQS
         
         private async Task SubscribeToTopics(IEnumerable<string> topics)
         {
-            var queueAttributes = await _sqsClient.GetAttributesAsync(_queueUrl).ConfigureAwait(false);
+            var queueAttributes = await _sqsClient!.GetAttributesAsync(_queueUrl).ConfigureAwait(false);
 
             var sqsQueueArn = queueAttributes["QueueArn"];
             foreach (var topicArn in topics)
             {
-                await _snsClient.SubscribeAsync(new SubscribeRequest
+                await _snsClient!.SubscribeAsync(new SubscribeRequest
                     {
                         TopicArn = topicArn,
                         Protocol = "sqs",

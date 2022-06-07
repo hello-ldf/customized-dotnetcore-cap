@@ -32,16 +32,19 @@ CAP can be installed in your project with the following command.
 PM> Install-Package DotNetCore.CAP
 ```
 
-CAP supports RabbitMQ, Kafka, AzureService, AmazonSQS as message queue, following packages are available to install:
+CAP supports most popular message queue as transport, following packages are available to install:
 
 ```
 PM> Install-Package DotNetCore.CAP.Kafka
 PM> Install-Package DotNetCore.CAP.RabbitMQ
 PM> Install-Package DotNetCore.CAP.AzureServiceBus
 PM> Install-Package DotNetCore.CAP.AmazonSQS
+PM> Install-Package DotNetCore.CAP.NATS
+PM> Install-Package DotNetCore.CAP.RedisStreams
+PM> Install-Package DotNetCore.CAP.Pulsar
 ```
 
-CAP supports SqlServer, MySql, PostgreSql，MongoDB as event log storage.
+CAP supports most popular database as event storage, following packages are available to install:
 
 ```
 // select a database provider you are using, event log table will integrate into.
@@ -180,7 +183,6 @@ Then register your class that implements `ISubscriberService` in Startup.cs
 ```c#
 public void ConfigureServices(IServiceCollection services)
 {
-    //Note: The injection of services needs before of `services.AddCap()`
     services.AddTransient<ISubscriberService,SubscriberService>();
 
     services.AddCap(x=>
@@ -204,7 +206,6 @@ public class CustomersSubscriberService : ICapSubscribe
 }
 ```
 
-
 #### Subscribe Group
 
 The concept of a subscription group is similar to that of a consumer group in Kafka. it is the same as the broadcast mode in the message queue, which is used to process the same message between multiple different microservice instances.
@@ -227,7 +228,8 @@ public void ShowTime2(DateTime datetime)
 }
 
 ```
-`ShowTime1` and `ShowTime2` will be called at the same time.
+`ShowTime1` and `ShowTime2` will be called one after another because all received messages are processed linear.
+You can change that behaviour increasing `ConsumerThreadCount`.
 
 BTW, You can specify the default group name in the configuration:
 

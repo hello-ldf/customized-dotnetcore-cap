@@ -33,7 +33,7 @@ namespace DotNetCore.CAP.Processor
             _waitingInterval = TimeSpan.FromSeconds(options.Value.FailedRetryInterval);
         }
 
-        public async Task ProcessAsync(ProcessingContext context)
+        public virtual async Task ProcessAsync(ProcessingContext context)
         {
             if (context == null)
             {
@@ -112,7 +112,7 @@ namespace DotNetCore.CAP.Processor
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(1, ex, "Get messages of type '{messageType}' failed. Retrying...", typeof(T).Name);
+                _logger.LogWarning(1, ex, "Get messages from storage failed. Retrying...");
 
                 return Enumerable.Empty<T>();
             }

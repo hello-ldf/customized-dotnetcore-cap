@@ -22,7 +22,7 @@ namespace DotNetCore.CAP
         /// </summary>
         public bool Succeeded { get; set; }
 
-        public Exception Exception { get; set; }
+        public Exception? Exception { get; set; }
 
         /// <summary>
         /// An <see cref="IEnumerable{T}" /> of <see cref="OperateError" />s containing an errors
@@ -81,7 +81,7 @@ namespace DotNetCore.CAP
     /// <summary>
     /// Encapsulates an error from the operate subsystem.
     /// </summary>
-    public class OperateError
+    public record struct OperateError
     {
         /// <summary>
         /// Gets or sets ths code for this error.

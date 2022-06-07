@@ -13,17 +13,8 @@ namespace Sample.RabbitMQ.MySql
             return $"Name:{Name}, Id:{Id}";
         }
     }
-    public class Person2
-    {
-        public int Id { get; set; }
 
-        public string Name { get; set; }
 
-        public override string ToString()
-        {
-            return $"Name:{Name}, Id:{Id}";
-        }
-    }
     public class AppDbContext : DbContext
     {
         public const string ConnectionString = "server=127.0.0.1;database=cap_sample_rabbitmq_mysql;user id=root;password=123456;CharSet=utf8;pooling=true;sslmode=none";
@@ -32,7 +23,7 @@ namespace Sample.RabbitMQ.MySql
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseMySql(ConnectionString, ServerVersion.FromString("5.7.34-mysql"));
+            optionsBuilder.UseMySql(ConnectionString, new MariaDbServerVersion(ServerVersion.AutoDetect(ConnectionString)));
         }
     }
 }

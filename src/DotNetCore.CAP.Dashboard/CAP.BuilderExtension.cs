@@ -8,12 +8,15 @@ using DotNetCore.CAP.Dashboard;
 using DotNetCore.CAP.Dashboard.GatewayProxy;
 using DotNetCore.CAP.Dashboard.NodeDiscovery;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Internal;
+using Microsoft.Extensions.Options;
 
 // ReSharper disable once CheckNamespace
 namespace DotNetCore.CAP
@@ -42,6 +45,12 @@ namespace DotNetCore.CAP
                 app.Map(options.PathMatch + "/api", false, x =>
                 {
 
+                    IAuthorizationService authService = null;
+                    if (!String.IsNullOrEmpty(options.AuthorizationPolicy))
+                    {
+                        authService = app.ApplicationServices.GetService<IAuthorizationService>();
+                    }
+
                     var builder = new RouteBuilder(x);
 
                     var methods = typeof(RouteActionProvider).GetMethods(BindingFlags.Instance | BindingFlags.Public);
@@ -57,6 +66,12 @@ namespace DotNetCore.CAP
                             builder.MapGet(getAttr.Template, async (request, response, data) =>
                             {
                                 if (!await Authentication(request.HttpContext, options))
+                                {
+                                    response.StatusCode = StatusCodes.Status401Unauthorized;
+                                    return;
+                                }
+
+                                if (!await Authorize(request, response, options, authService))
                                 {
                                     response.StatusCode = StatusCodes.Status401Unauthorized;
                                     return;
@@ -81,6 +96,12 @@ namespace DotNetCore.CAP
                             builder.MapPost(postAttr.Template, async (request, response, data) =>
                             {
                                 if (!await Authentication(request.HttpContext, options))
+                                {
+                                    response.StatusCode = StatusCodes.Status401Unauthorized;
+                                    return;
+                                }
+
+                                if (!await Authorize(request, response, options, authService))
                                 {
                                     response.StatusCode = StatusCodes.Status401Unauthorized;
                                     return;
@@ -111,13 +132,28 @@ namespace DotNetCore.CAP
 
         internal static async Task<bool> Authentication(HttpContext context, DashboardOptions options)
         {
-            if (options.UseAuth)
+            var isAuthenticated = context.User?.Identity?.IsAuthenticated;
+
+            if (isAuthenticated == false && options.UseChallengeOnAuth)
+            {
+                await context.ChallengeAsync(options.DefaultChallengeScheme);
+                await context.Response.CompleteAsync();
+
+                return false;
+            }
+
+            if (isAuthenticated == false && options.UseAuth)
             {
                 var result = await context.AuthenticateAsync(options.DefaultAuthenticationScheme);
 
                 if (result.Succeeded && result.Principal != null)
                 {
-                    context.User = result.Principal;
+                    //If a cookie scheme is configured, the authentication result will be placed in a cookie to avoid re-authentication
+                    var defaultOptions = context.RequestServices.GetService<IOptions<AuthenticationOptions>>();
+                    if (defaultOptions != null && defaultOptions.Value.DefaultScheme == CookieAuthenticationDefaults.AuthenticationScheme)
+                    {
+                        await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, result.Principal);
+                    }
                 }
                 else
                 {
@@ -125,16 +161,20 @@ namespace DotNetCore.CAP
                 }
             }
 
-            var isAuthenticated = context.User?.Identity?.IsAuthenticated;
-
-            if (isAuthenticated == false && options.UseChallengeOnAuth)
-            {
-                await context.ChallengeAsync(options.DefaultChallengeScheme);
-
-                return false;
-            }
-
             return true;
-        } 
+        }
+
+        internal static async Task<bool> Authorize(HttpRequest request, HttpResponse response, DashboardOptions options, IAuthorizationService authservice)
+        {
+            if (!String.IsNullOrEmpty(options.AuthorizationPolicy) && (authservice != null))
+            {
+                AuthorizationResult authorizationResult = await authservice.AuthorizeAsync(request.HttpContext.User, null, options.AuthorizationPolicy);
+                if (!authorizationResult.Succeeded)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 }

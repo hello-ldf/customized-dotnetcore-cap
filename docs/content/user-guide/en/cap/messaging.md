@@ -73,7 +73,7 @@ cap-msg-type | string | The type of message, `typeof(T).FullName`(not required)
 cap-senttime | string | sending time (not required)
 
 ### Custom headers
-To consume messages sent without CAP headers, both Kafka and RabbitMQ consumers can inject a minimal set of headers using custom headers as shown below:
+To consume messages sent without CAP headers, both AzureServiceBus, Kafka and RabbitMQ consumers can inject a minimal set of headers using the `CustomHeaders` property as shown below (RabbitMQ example):
 ```C#
 container.AddCap(x =>
 {
@@ -89,7 +89,7 @@ container.AddCap(x =>
 });
 ```
 
-After adding `cap-msg-id` and `cap-msg-name`, CAP consumers receive messages sent directly from the RabbitMQ management tool.
+After adding `cap-msg-id` and `cap-msg-name`, CAP consumers receive messages sent directly from any external system, like the RabbitMQ management tool when using RabbitMQ as a transport.
 
 ## Scheduling
 
@@ -125,7 +125,7 @@ There is an `ExpiresAt` field in the database message table indicating the expir
 
 Consuming failure will change the message status to `Failed` and `ExpiresAt` will be set to **15 days** later.
 
-By default, the data of the message in the table is deleted **5 minutes** to avoid performance degradation caused by too much data. The cleanup strategy `ExpiresAt` is performed when field is not empty and is less than the current time. 
+By default, the data of the message in the table is deleted every **5 minutes** to avoid performance degradation caused by too much data. The cleanup strategy `ExpiresAt` is performed when field is not empty and is less than the current time. 
 
 That is to say, the message with the status Failed (by default they have been retried 50 times), if you do not have manual intervention for 15 days, it will **also be** cleaned up.
 

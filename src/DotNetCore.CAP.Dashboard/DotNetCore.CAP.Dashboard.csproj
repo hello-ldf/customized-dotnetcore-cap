@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net5.0</TargetFramework>
+		<TargetFramework>net6.0</TargetFramework>
 		<LangVersion>default</LangVersion>
 		<PackageId>XD.DotNetCore.CAP.Dashboard</PackageId>
 		<Version>5.1.4.1-alpha</Version>
@@ -12,7 +12,7 @@ Distributed transaction solution in micro-service base on eventually consistency
 
 	<ItemGroup>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
-		<PackageReference Include="Consul" Version="1.6.1.1" />
+		<PackageReference Include="Consul" Version="1.6.10.3" />
 		<SupportedPlatform Include="browser" />
 	</ItemGroup>
 
