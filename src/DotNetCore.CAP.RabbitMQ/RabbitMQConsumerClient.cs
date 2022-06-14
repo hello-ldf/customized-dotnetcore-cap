@@ -7,7 +7,6 @@ using System.Text;
 using System.Threading;
 using DotNetCore.CAP.Messages;
 using DotNetCore.CAP.Transport;
-using JetBrains.Annotations;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -62,7 +61,7 @@ namespace DotNetCore.CAP.RabbitMQ
             }
         }
 
-        public void SubscribeDynamic([NotNull] IEnumerable<string> topics)
+        public void SubscribeDynamic(IEnumerable<string> topics)
         {
             if (topics == null)
             {
@@ -77,7 +76,7 @@ namespace DotNetCore.CAP.RabbitMQ
             }
         }
 
-        public void UnsubscribeDynamic([NotNull] IEnumerable<string> topics)
+        public void UnsubscribeDynamic(IEnumerable<string> topics)
         {
             if (topics == null)
             {

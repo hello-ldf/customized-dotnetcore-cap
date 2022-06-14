@@ -10,8 +10,8 @@
     <DocumentationFile>bin\$(Configuration)\netstandard2.1\DotNetCore.CAP.RabbitMQ.xml</DocumentationFile>
     <NoWarn>1701;1702;1705;CS1591</NoWarn>
     <Authors>ncc;savorboard;lidaifu</Authors>
-    <Version>5.1.4.1-alpha</Version>
-    <PackageId>XD.DotNetCore.CAP.RabbitMQ</PackageId>
+    <Version>$(VersionPrefix)-alpha</Version>
+    <PackageId>XD.$(AssemblyName)</PackageId>
     <Description>个人修订版。https://github.com/hello-ldf/customized-dotnetcore-cap.git
 Distributed transaction solution in micro-service base on eventually consistency, also an eventbus with Outbox pattern.</Description>
   </PropertyGroup>

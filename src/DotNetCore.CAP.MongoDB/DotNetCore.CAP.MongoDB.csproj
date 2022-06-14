@@ -4,6 +4,11 @@
     <TargetFramework>netstandard2.1</TargetFramework>
 	<Nullable>enable</Nullable>
     <PackageTags>$(PackageTags);MongoDB</PackageTags>
+    <PackageId>XD.$(AssemblyName)</PackageId>
+    <Version>$(VersionPrefix)-alpha</Version>
+    <Authors>ncc;savorboard;lidaifu</Authors>
+    <Description>个人修订版。https://github.com/hello-ldf/customized-dotnetcore-cap.git
+Distributed transaction solution in micro-service base on eventually consistency, also an eventbus with Outbox pattern.</Description>
   </PropertyGroup>
    
   <ItemGroup>

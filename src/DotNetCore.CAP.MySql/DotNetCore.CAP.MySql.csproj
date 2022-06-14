@@ -16,29 +16,18 @@
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="5.0.12" />
 		<PackageReference Include="MySqlConnector" Version="2.0.0" />
 	</ItemGroup>
-	
 	<ItemGroup>
-		<ProjectReference Include="..\DotNetCore.CAP\DotNetCore.CAP.csproj" />
+	  <ProjectReference Include="..\DotNetCore.CAP\DotNetCore.CAP.csproj" />
 	</ItemGroup>
 
   <PropertyGroup>
     <DocumentationFile>bin\$(Configuration)\netstandard2.1\DotNetCore.CAP.MySql.xml</DocumentationFile>
     <NoWarn>1701;1702;1705;CS1591</NoWarn>
-    <Version>5.1.4.3-alpha</Version>
+    <Version>$(VersionPrefix)-alpha</Version>
     <Authors>ncc;savorboard;lidaifu</Authors>
     <Description>个人修订版。https://github.com/hello-ldf/customized-dotnetcore-cap.git
 Distributed transaction solution in micro-service base on eventually consistency, also an eventbus with Outbox pattern.</Description>
-    <PackageId>XD.DotNetCore.CAP.MySql</PackageId>
+    <PackageId>XD.$(AssemblyName)</PackageId>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="5.0.4" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="5.0.4" />
-    <PackageReference Include="MySqlConnector" Version="1.3.11" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\DotNetCore.CAP\DotNetCore.CAP.csproj" />
-  </ItemGroup>
  
 </Project>

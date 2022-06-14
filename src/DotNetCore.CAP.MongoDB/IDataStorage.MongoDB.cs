@@ -173,7 +173,7 @@ namespace DotNetCore.CAP.MongoDB
             }
         }
 
-        public async Task<IEnumerable<MediumMessage>> GetPublishedMessagesOfNeedRetry()
+        public async Task<IEnumerable<MediumMessage>> GetPublishedMessagesOfNeedRetry(long skip, long take)
         {
             var fourMinAgo = DateTime.Now.AddMinutes(-4);
             var collection = _database.GetCollection<PublishedMessage>(_options.Value.PublishedCollection);
@@ -183,7 +183,8 @@ namespace DotNetCore.CAP.MongoDB
                            && x.Version == _capOptions.Value.Version
                            && (x.StatusName == nameof(StatusName.Failed) ||
                                x.StatusName == nameof(StatusName.Scheduled)))
-                .Limit(200)
+                .Skip((int)skip)
+                .Limit((int)take)
                 .ToListAsync();
             return queryResult.Select(x => new MediumMessage
             {
@@ -194,7 +195,7 @@ namespace DotNetCore.CAP.MongoDB
             }).ToList();
         }
 
-        public async Task<IEnumerable<MediumMessage>> GetReceivedMessagesOfNeedRetry()
+        public async Task<IEnumerable<MediumMessage>> GetReceivedMessagesOfNeedRetry(long skip, long take)
         {
             var fourMinAgo = DateTime.Now.AddMinutes(-4);
             var collection = _database.GetCollection<ReceivedMessage>(_options.Value.ReceivedCollection);
@@ -204,7 +205,8 @@ namespace DotNetCore.CAP.MongoDB
                            && x.Version == _capOptions.Value.Version
                            && (x.StatusName == nameof(StatusName.Failed) ||
                                x.StatusName == nameof(StatusName.Scheduled)))
-                .Limit(200)
+                .Skip((int)skip)
+                .Limit((int)take)
                 .ToListAsync();
             return queryResult.Select(x => new MediumMessage
             {
