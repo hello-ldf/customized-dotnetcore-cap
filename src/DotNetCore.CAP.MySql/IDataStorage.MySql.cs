@@ -102,7 +102,7 @@ namespace DotNetCore.CAP.MySql
                 new MySqlParameter("@Content", content),
                 new MySqlParameter("@Retries", _capOptions.Value.FailedRetryCount),
                 new MySqlParameter("@Added", DateTime.Now),
-                new MySqlParameter("@ExpiresAt", DateTime.Now.AddDays(15)),
+                new MySqlParameter("@ExpiresAt", DateTime.Now.AddSeconds(_capOptions.Value.FailedMessageExpiredAfter)),
                 new MySqlParameter("@StatusName", nameof(StatusName.Failed))
             };
 
@@ -185,10 +185,17 @@ namespace DotNetCore.CAP.MySql
         private async Task<IEnumerable<MediumMessage>> GetMessagesOfNeedRetryAsync(string tableName, long skip, long take)
         {
             var oneMinAgo = DateTime.Now.AddMinutes(-1).ToString("");
-            var fourMinAgo = DateTime.Now.AddMinutes(-4).ToString("O");
+            var fourMinAgo = DateTime.Now.AddMinutes(-4);
             var sql =
-                $"SELECT `Id`,`Content`,`Retries`,`Added` FROM `{tableName}` WHERE `Retries`<{_capOptions.Value.FailedRetryCount} " +
-                $"AND `Version`='{_capOptions.Value.Version}' AND ((`Added`<'{oneMinAgo}' AND `StatusName` = '{StatusName.Failed}') OR (`Added`<'{fourMinAgo}' AND `StatusName` = '{StatusName.Scheduled}')) LIMIT {skip},{take};";
+                $"SELECT `Id`,`Content`,`Retries`,`Added` FROM `{tableName}` WHERE `Retries`<@Retries " +
+                $"AND `Version`=@Version AND `Added`<@Added AND (`StatusName` = '{StatusName.Failed}' OR `StatusName` = '{StatusName.Scheduled}') LIMIT {skip},{take};";
+
+            object[] sqlParams =
+            {
+                new MySqlParameter("@Retries", _capOptions.Value.FailedRetryCount),
+                new MySqlParameter("@Version", _capOptions.Value.Version),
+                new MySqlParameter("@Added", fourMinAgo)
+            };
 
             await using var connection = new MySqlConnection(_options.Value.ConnectionString);
             var result = connection.ExecuteReader(sql, reader =>
@@ -206,7 +213,7 @@ namespace DotNetCore.CAP.MySql
                 }
 
                 return messages;
-            });
+            }, sqlParams);
 
             return result;
         }
